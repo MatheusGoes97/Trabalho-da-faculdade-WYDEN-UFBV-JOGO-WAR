@@ -1,0 +1,284 @@
+Sistema de Cadastro de Territórios - Jogo WAR
+
+#include <stdio.h>
+#include <string.h>
+
+// Definição da struct Territorio
+// Esta estrutura agrupa os dados relacionados a cada território do jogo
+struct Territorio {
+    char nome[30];      // Nome do território (até 29 caracteres + '\0')
+    char cor[10];       // Cor do exército que ocupa o território
+    int tropas;         // Quantidade de tropas no território
+};
+
+// Função para limpar o buffer de entrada
+void limparBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+int main() {
+    // Declaração do vetor de structs para armazenar 5 territórios
+    struct Territorio territorios[5];
+    
+    printf("=== SISTEMA DE CADASTRO DE TERRITORIOS - WAR ===\n\n");
+    
+    // Cadastro dos 5 territórios
+    printf("CADASTRO DE TERRITORIOS\n");
+    printf("-----------------------\n");
+    
+    for (int i = 0; i < 5; i++) {
+        printf("\nTerritorio %d/%d:\n", i + 1, 5);
+        
+        // Entrada do nome do território
+        printf("Nome do territorio: ");
+        fgets(territorios[i].nome, 30, stdin);
+        
+        // Remover o caractere de nova linha (\n) do final da string
+        territorios[i].nome[strcspn(territorios[i].nome, "\n")] = '\0';
+        
+        // Entrada da cor do exército
+        printf("Cor do exercito: ");
+        fgets(territorios[i].cor, 10, stdin);
+        territorios[i].cor[strcspn(territorios[i].cor, "\n")] = '\0';
+        
+        // Entrada do número de tropas
+        printf("Numero de tropas: ");
+        scanf("%d", &territorios[i].tropas);
+        limparBuffer(); // Limpar buffer após scanf
+        
+        // Verificar se o número de tropas é positivo
+        while (territorios[i].tropas < 0) {
+            printf("Numero de tropas invalido! Digite um valor positivo: ");
+            scanf("%d", &territorios[i].tropas);
+            limparBuffer();
+        }
+    }
+    
+    // Exibição dos dados cadastrados
+    printf("\n\n=== TERRITORIOS CADASTRADOS ===\n");
+    printf("===============================\n\n");
+    
+    for (int i = 0; i < 5; i++) {
+        printf("TERRITORIO %d\n", i + 1);
+        printf("------------\n");
+        printf("Nome:   %s\n", territorios[i].nome);
+        printf("Cor:    %s\n", territorios[i].cor);
+        printf("Tropas: %d\n", territorios[i].tropas);
+        printf("\n");
+    }
+    
+    // Estatísticas adicionais (bônus)
+    printf("=== ESTATISTICAS ===\n");
+    printf("====================\n");
+    
+    int total_tropas = 0;
+    int maior_tropas = territorios[0].tropas;
+    int indice_maior = 0;
+    
+    for (int i = 0; i < 5; i++) {
+        total_tropas += territorios[i].tropas;
+        
+        if (territorios[i].tropas > maior_tropas) {
+            maior_tropas = territorios[i].tropas;
+            indice_maior = i;
+        }
+    }
+    
+    printf("Total de tropas em todos os territorios: %d\n", total_tropas);
+    printf("Territorio com mais tropas: %s (%d tropas)\n", 
+           territorios[indice_maior].nome, maior_tropas);
+    printf("Media de tropas por territorio: %.2f\n", total_tropas / 5.0);
+    
+    return 0;
+}
+```
+
+Versão alternativa usando typedef:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+// Definição da struct Territorio com typedef
+// O typedef permite usar "Territorio" diretamente sem "struct"
+typedef struct {
+    char nome[30];      // Nome do território
+    char cor[10];       // Cor do exército
+    int tropas;         // Quantidade de tropas
+} Territorio;
+
+// Função para limpar o buffer de entrada
+void limparBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+// Função para exibir um território
+void exibirTerritorio(Territorio t, int numero) {
+    printf("\nTERRITORIO %d\n", numero);
+    printf("------------\n");
+    printf("Nome:   %s\n", t.nome);
+    printf("Cor:    %s\n", t.cor);
+    printf("Tropas: %d\n", t.tropas);
+}
+
+int main() {
+    // Declaração do vetor de 5 territórios
+    Territorio territorios[5];
+    
+    printf("=== SISTEMA DE CADASTRO DE TERRITORIOS - WAR ===\n\n");
+    
+    // Cadastro dos 5 territórios
+    printf("CADASTRO DE TERRITORIOS\n");
+    printf("-----------------------\n");
+    
+    for (int i = 0; i < 5; i++) {
+        printf("\nTerritorio %d/%d:\n", i + 1, 5);
+        
+        // Entrada do nome
+        printf("Nome do territorio: ");
+        fgets(territorios[i].nome, 30, stdin);
+        territorios[i].nome[strcspn(territorios[i].nome, "\n")] = '\0';
+        
+        // Entrada da cor
+        printf("Cor do exercito: ");
+        fgets(territorios[i].cor, 10, stdin);
+        territorios[i].cor[strcspn(territorios[i].cor, "\n")] = '\0';
+        
+        // Entrada das tropas
+        printf("Numero de tropas: ");
+        while (scanf("%d", &territorios[i].tropas) != 1 || territorios[i].tropas < 0) {
+            printf("Valor invalido! Digite um numero positivo: ");
+            limparBuffer();
+        }
+        limparBuffer();
+    }
+    
+    // Exibição dos dados
+    printf("\n\n=== TERRITORIOS CADASTRADOS ===\n");
+    printf("===============================\n");
+    
+    for (int i = 0; i < 5; i++) {
+        exibirTerritorio(territorios[i], i + 1);
+    }
+    
+    return 0;
+}
+```
+
+Explicação do código:
+
+1. Struct Territorio
+
+```c
+struct Territorio {
+    char nome[30];
+    char cor[10];
+    int tropas;
+};
+```
+
+· Agrupa dados relacionados em uma única estrutura
+· Facilita a organização e manipulação dos dados
+
+2. Vetor de structs
+
+```c
+struct Territorio territorios[5];
+```
+
+· Cria um array capaz de armazenar 5 estruturas Territorio
+· Cada elemento do array é uma struct completa
+
+3. Entrada de dados
+
+```c
+fgets(territorios[i].nome, 30, stdin);
+```
+
+· Usa fgets para ler strings de forma segura
+· Evita problemas de buffer overflow
+
+4. Limpeza do buffer
+
+```c
+void limparBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+```
+
+· Remove caracteres extras do buffer de entrada
+· Previne problemas na leitura subsequente
+
+5. Validação de entrada
+
+```c
+while (territorios[i].tropas < 0) {
+    printf("Numero de tropas invalido!...");
+    scanf("%d", &territorios[i].tropas);
+}
+```
+
+· Garante que o número de tropas seja positivo
+· Melhora a robustez do programa
+
+Como compilar e executar:
+
+```bash
+# Compilar o programa
+gcc -o territorios territorios.c
+
+# Executar o programa
+./territorios
+```
+
+Exemplo de execução:
+
+```
+=== SISTEMA DE CADASTRO DE TERRITORIOS - WAR ===
+
+CADASTRO DE TERRITORIOS
+-----------------------
+
+Territorio 1/5:
+Nome do territorio: Brasil
+Cor do exercito: Verde
+Numero de tropas: 25
+
+Territorio 2/5:
+Nome do territorio: Argentina
+Cor do exercito: Azul
+Numero de tropas: 18
+
+... (continua para os outros 3 territórios)
+
+=== TERRITORIOS CADASTRADOS ===
+===============================
+
+TERRITORIO 1
+------------
+Nome:   Brasil
+Cor:    Verde
+Tropas: 25
+
+TERRITORIO 2
+------------
+Nome:   Argentina
+Cor:    Azul
+Tropas: 18
+
+... (exibe os demais territórios)
+```
+
+Este código atende a todos os requisitos:
+
+· Usa struct para agrupar dados
+· Permite cadastro de 5 territórios
+· Interface clara e intuitiva
+· Tempo de resposta inferior a 2 segundos
+· Código bem comentado e documentado
+· Nomenclatura clara e representativa
+· Validação de entrada
+· Formatação de saída organizada
