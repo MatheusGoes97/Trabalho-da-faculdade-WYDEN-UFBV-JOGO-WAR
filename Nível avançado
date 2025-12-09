@@ -1,0 +1,480 @@
+Sistema de Guerra Avançado - WAR
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <ctype.h>
+
+// Definição da struct Territorio
+typedef struct {
+    char nome[30];      // Nome do território
+    char cor[10];       // Cor do exército que ocupa o território
+    int tropas;         // Quantidade de tropas no território
+    int id;            // Identificador único do território
+} Territorio;
+
+// Protótipos de funções
+Territorio* alocarTerritorios(int quantidade);
+void cadastrarTerritorios(Territorio* mapa, int quantidade);
+void exibirTerritorios(Territorio* mapa, int quantidade);
+void atacar(Territorio* atacante, Territorio* defensor);
+void liberarMemoria(Territorio* mapa);
+void exibirMenu();
+void limparBuffer();
+void pausarTela();
+int validarAtaque(Territorio* atacante, Territorio* defensor);
+
+// Variável global para contar territórios criados
+int proximo_id = 1;
+
+// Função principal
+int main() {
+    srand(time(NULL));  // Inicializa gerador de números aleatórios
+    
+    int quantidade_territorios;
+    Territorio* mapa = NULL;
+    int opcao;
+    
+    printf("=== SISTEMA DE GUERRA AVANCADO - WAR ===\n\n");
+    
+    // Solicitar quantidade de territórios
+    printf("Quantos territorios deseja criar? ");
+    scanf("%d", &quantidade_territorios);
+    limparBuffer();
+    
+    // Validar entrada
+    while (quantidade_territorios <= 0) {
+        printf("Quantidade invalida! Digite um numero positivo: ");
+        scanf("%d", &quantidade_territorios);
+        limparBuffer();
+    }
+    
+    // Alocar memória dinamicamente
+    mapa = alocarTerritorios(quantidade_territorios);
+    if (mapa == NULL) {
+        printf("Erro ao alocar memoria!\n");
+        return 1;
+    }
+    
+    printf("\nMemoria alocada para %d territorios!\n\n", quantidade_territorios);
+    
+    // Menu principal
+    do {
+        exibirMenu();
+        printf("Escolha uma opcao: ");
+        scanf("%d", &opcao);
+        limparBuffer();
+        
+        switch (opcao) {
+            case 1:
+                cadastrarTerritorios(mapa, quantidade_territorios);
+                break;
+                
+            case 2:
+                exibirTerritorios(mapa, quantidade_territorios);
+                break;
+                
+            case 3:
+                if (quantidade_territorios >= 2) {
+                    int id_atacante, id_defensor;
+                    
+                    printf("\n=== SIMULAR ATAQUE ===\n");
+                    exibirTerritorios(mapa, quantidade_territorios);
+                    
+                    printf("\nEscolha o territorio ATACANTE (ID): ");
+                    scanf("%d", &id_atacante);
+                    limparBuffer();
+                    
+                    printf("Escolha o territorio DEFENSOR (ID): ");
+                    scanf("%d", &id_defensor);
+                    limparBuffer();
+                    
+                    // Validar IDs
+                    if (id_atacante < 1 || id_atacante > quantidade_territorios ||
+                        id_defensor < 1 || id_defensor > quantidade_territorios) {
+                        printf("IDs invalidos!\n");
+                    } else if (id_atacante == id_defensor) {
+                        printf("Nao pode atacar o proprio territorio!\n");
+                    } else {
+                        Territorio* atacante = &mapa[id_atacante - 1];
+                        Territorio* defensor = &mapa[id_defensor - 1];
+                        
+                        if (validarAtaque(atacante, defensor)) {
+                            atacar(atacante, defensor);
+                        } else {
+                            printf("Ataque invalido! Territorios tem a mesma cor.\n");
+                        }
+                    }
+                } else {
+                    printf("Eh necessario pelo menos 2 territorios para simular ataque!\n");
+                }
+                pausarTela();
+                break;
+                
+            case 4:
+                printf("\n=== RELATORIO DE TERRITORIOS ===\n");
+                exibirTerritorios(mapa, quantidade_territorios);
+                
+                // Calcular estatísticas
+                int total_tropas = 0;
+                int maior_tropas = 0;
+                int indice_maior = 0;
+                
+                for (int i = 0; i < quantidade_territorios; i++) {
+                    total_tropas += mapa[i].tropas;
+                    if (mapa[i].tropas > maior_tropas) {
+                        maior_tropas = mapa[i].tropas;
+                        indice_maior = i;
+                    }
+                }
+                
+                printf("\n=== ESTATISTICAS ===\n");
+                printf("Total de tropas: %d\n", total_tropas);
+                printf("Territorio mais forte: %s (%d tropas)\n", 
+                       mapa[indice_maior].nome, maior_tropas);
+                printf("Media de tropas: %.2f\n", (float)total_tropas / quantidade_territorios);
+                pausarTela();
+                break;
+                
+            case 0:
+                printf("Encerrando sistema...\n");
+                break;
+                
+            default:
+                printf("Opcao invalida!\n");
+                pausarTela();
+        }
+        
+    } while (opcao != 0);
+    
+    // Liberar memória alocada
+    liberarMemoria(mapa);
+    
+    printf("Memoria liberada. Programa encerrado.\n");
+    return 0;
+}
+
+// Função para alocar memória dinamicamente para os territórios
+Territorio* alocarTerritorios(int quantidade) {
+    // Aloca memória para 'quantidade' de estruturas Territorio
+    // Calloc inicializa todos os bytes com zero
+    Territorio* vetor = (Territorio*)calloc(quantidade, sizeof(Territorio));
+    
+    if (vetor != NULL) {
+        printf("Alocacao bem sucedida! %d territorios criados.\n", quantidade);
+    }
+    
+    return vetor;
+}
+
+// Função para cadastrar territórios
+void cadastrarTerritorios(Territorio* mapa, int quantidade) {
+    printf("\n=== CADASTRO DE TERRITORIOS ===\n");
+    
+    for (int i = 0; i < quantidade; i++) {
+        printf("\nTerritorio %d/%d:\n", i + 1, quantidade);
+        
+        // Atribuir ID
+        mapa[i].id = proximo_id++;
+        
+        // Entrada do nome
+        printf("Nome: ");
+        fgets(mapa[i].nome, 30, stdin);
+        mapa[i].nome[strcspn(mapa[i].nome, "\n")] = '\0';
+        
+        // Entrada da cor
+        printf("Cor do exercito: ");
+        fgets(mapa[i].cor, 10, stdin);
+        mapa[i].cor[strcspn(mapa[i].cor, "\n")] = '\0';
+        
+        // Entrada das tropas
+        printf("Numero de tropas: ");
+        while (scanf("%d", &mapa[i].tropas) != 1 || mapa[i].tropas <= 0) {
+            printf("Valor invalido! Digite um numero positivo: ");
+            limparBuffer();
+        }
+        limparBuffer();
+    }
+    
+    printf("\nCadastro concluido!\n");
+    pausarTela();
+}
+
+// Função para exibir todos os territórios
+void exibirTerritorios(Territorio* mapa, int quantidade) {
+    if (quantidade == 0) {
+        printf("Nenhum territorio cadastrado!\n");
+        return;
+    }
+    
+    printf("\n=== LISTA DE TERRITORIOS ===\n");
+    printf("ID  | NOME                | COR      | TROPAS\n");
+    printf("----|---------------------|----------|--------\n");
+    
+    for (int i = 0; i < quantidade; i++) {
+        printf("%-3d | %-20s | %-8s | %-6d\n", 
+               mapa[i].id, 
+               mapa[i].nome, 
+               mapa[i].cor, 
+               mapa[i].tropas);
+    }
+}
+
+// Função para validar se um ataque é permitido
+int validarAtaque(Territorio* atacante, Territorio* defensor) {
+    // Um ataque só é válido se as cores forem diferentes
+    return (strcmp(atacante->cor, defensor->cor) != 0);
+}
+
+// Função para simular um ataque entre dois territórios
+void atacar(Territorio* atacante, Territorio* defensor) {
+    printf("\n=== SIMULACAO DE ATAQUE ===\n");
+    printf("ATACANTE: %s (%s) - %d tropas\n", 
+           atacante->nome, atacante->cor, atacante->tropas);
+    printf("DEFENSOR: %s (%s) - %d tropas\n", 
+           defensor->nome, defensor->cor, defensor->tropas);
+    printf("\n");
+    
+    // Verificar se o atacante tem tropas suficientes
+    if (atacante->tropas < 2) {
+        printf("Ataque impossivel! Atacante precisa de pelo menos 2 tropas.\n");
+        return;
+    }
+    
+    // Lançar dados para atacante e defensor
+    int dado_atacante = (rand() % 6) + 1;  // Número entre 1 e 6
+    int dado_defensor = (rand() % 6) + 1;  // Número entre 1 e 6
+    
+    printf("Dado do ATACANTE: %d\n", dado_atacante);
+    printf("Dado do DEFENSOR: %d\n", dado_defensor);
+    printf("\n");
+    
+    // Determinar resultado do ataque
+    if (dado_atacante > dado_defensor) {
+        // ATACANTE VENCEU
+        printf("*** VITORIA DO ATACANTE! ***\n");
+        
+        // Calcular tropas conquistadas (metade das tropas do defensor)
+        int tropas_conquistadas = defensor->tropas / 2;
+        if (tropas_conquistadas < 1) tropas_conquistadas = 1;
+        
+        // Transferir cor e tropas
+        printf("%s conquista %s!\n", atacante->nome, defensor->nome);
+        printf("Cor alterada de '%s' para '%s'\n", defensor->cor, atacante->cor);
+        printf("Tropas transferidas: %d\n", tropas_conquistadas);
+        
+        // Atualizar dados do defensor
+        strcpy(defensor->cor, atacante->cor);
+        defensor->tropas = tropas_conquistadas;
+        
+        // Atacante perde 1 tropa no ataque
+        atacante->tropas--;
+        printf("Atacante perde 1 tropa no ataque. Restam: %d tropas\n", atacante->tropas);
+        
+    } else if (dado_atacante < dado_defensor) {
+        // DEFENSOR VENCEU
+        printf("*** VITORIA DO DEFENSOR! ***\n");
+        
+        // Atacante perde 1 tropa
+        atacante->tropas--;
+        printf("Atacante perde 1 tropa. Restam: %d tropas\n", atacante->tropas);
+        
+        // Defensor mantém seu território
+        printf("Defensor mantem o territorio %s\n", defensor->nome);
+        
+    } else {
+        // EMPATE
+        printf("*** EMPATE! ***\n");
+        printf("Nenhuma alteracao nos territorios.\n");
+    }
+    
+    printf("\n=== SITUACAO ATUAL ===\n");
+    printf("ATACANTE %s: %d tropas\n", atacante->nome, atacante->tropas);
+    printf("DEFENSOR %s: %d tropas (%s)\n", defensor->nome, defensor->tropas, defensor->cor);
+}
+
+// Função para liberar a memória alocada
+void liberarMemoria(Territorio* mapa) {
+    if (mapa != NULL) {
+        free(mapa);  // Libera a memória alocada com malloc/calloc
+        mapa = NULL; // Boa prática: definir ponteiro como NULL após liberar
+        printf("Memoria liberada com sucesso!\n");
+    }
+}
+
+// Função para exibir o menu principal
+void exibirMenu() {
+    printf("\n=== MENU PRINCIPAL ===\n");
+    printf("1. Cadastrar territorios\n");
+    printf("2. Listar territorios\n");
+    printf("3. Simular ataque\n");
+    printf("4. Exibir relatorio completo\n");
+    printf("0. Sair\n");
+}
+
+// Função para limpar o buffer de entrada
+void limparBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+// Função para pausar a tela
+void pausarTela() {
+    printf("\nPressione Enter para continuar...");
+    getchar();
+}
+```
+
+Explicação das principais funcionalidades:
+
+1. Alocação Dinâmica de Memória
+
+```c
+Territorio* alocarTerritorios(int quantidade) {
+    Territorio* vetor = (Territorio*)calloc(quantidade, sizeof(Territorio));
+    return vetor;
+}
+```
+
+· Usa calloc para alocar memória e inicializar com zeros
+· Retorna um ponteiro para o bloco de memória alocado
+
+2. Função de Ataque com Dados Aleatórios
+
+```c
+void atacar(Territorio* atacante, Territorio* defensor) {
+    int dado_atacante = (rand() % 6) + 1;
+    int dado_defensor = (rand() % 6) + 1;
+    
+    if (dado_atacante > dado_defensor) {
+        // Atacante vence: transfere cor e metade das tropas
+        strcpy(defensor->cor, atacante->cor);
+        defensor->tropas = defensor->tropas / 2;
+        atacante->tropas--;
+    }
+    // ... outros resultados
+}
+```
+
+· Simula lançamento de dados (1-6)
+· Implementa as regras de conquista do jogo WAR
+
+3. Validação de Ataque
+
+```c
+int validarAtaque(Territorio* atacante, Territorio* defensor) {
+    return (strcmp(atacante->cor, defensor->cor) != 0);
+}
+```
+
+· Impede ataques entre territórios da mesma cor
+· Usa strcmp para comparar strings
+
+4. Liberação de Memória
+
+```c
+void liberarMemoria(Territorio* mapa) {
+    if (mapa != NULL) {
+        free(mapa);
+        mapa = NULL;
+    }
+}
+```
+
+· Libera memória alocada dinamicamente
+· Verifica se o ponteiro não é NULL antes de liberar
+
+5. Inicialização do Gerador Aleatório
+
+```c
+srand(time(NULL));
+```
+
+· Inicializa o gerador de números aleatórios
+· Garante sequências diferentes a cada execução
+
+Como compilar e executar:
+
+```bash
+# Compilar o programa
+gcc -o guerra_avancado guerra_avancado.c
+
+# Executar o programa
+./guerra_avancado
+```
+
+Exemplo de execução:
+
+```
+=== SISTEMA DE GUERRA AVANCADO - WAR ===
+
+Quantos territorios deseja criar? 4
+
+Memoria alocada! 4 territorios criados.
+
+=== MENU PRINCIPAL ===
+1. Cadastrar territorios
+2. Listar territorios
+3. Simular ataque
+4. Exibir relatorio completo
+0. Sair
+Escolha uma opcao: 1
+
+=== CADASTRO DE TERRITORIOS ===
+
+Territorio 1/4:
+Nome: Brasil
+Cor do exercito: Verde
+Numero de tropas: 20
+
+Territorio 2/4:
+Nome: Argentina
+Cor do exercito: Azul
+Numero de tropas: 15
+
+Territorio 3/4:
+Nome: Chile
+Cor do exercito: Vermelho
+Numero de tropas: 12
+
+Territorio 4/4:
+Nome: Peru
+Cor do exercito: Amarelo
+Numero de tropas: 18
+
+=== MENU PRINCIPAL ===
+1. Cadastrar territorios
+2. Listar territorios
+3. Simular ataque
+4. Exibir relatorio completo
+0. Sair
+Escolha uma opcao: 3
+
+=== SIMULAR ATAQUE ===
+ID  | NOME                | COR      | TROPAS
+----|---------------------|----------|--------
+1   | Brasil              | Verde    | 20
+2   | Argentina           | Azul     | 15
+3   | Chile               | Vermelho | 12
+4   | Peru                | Amarelo  | 18
+
+Escolha o territorio ATACANTE (ID): 1
+Escolha o territorio DEFENSOR (ID): 2
+
+=== SIMULACAO DE ATAQUE ===
+ATACANTE: Brasil (Verde) - 20 tropas
+DEFENSOR: Argentina (Azul) - 15 tropas
+
+Dado do ATACANTE: 5
+Dado do DEFENSOR: 3
+
+*** VITORIA DO ATACANTE! ***
+Brasil conquista Argentina!
+Cor alterada de 'Azul' para 'Verde'
+Tropas transferidas: 7
+Atacante perde 1 tropa no ataque. Restam: 19 tropas
+
+=== SITUACAO ATUAL ===
+ATACANTE Brasil: 19 tropas
+DEFENSOR Argentina: 7 tropas (Verde)
