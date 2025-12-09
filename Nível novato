@@ -270,15 +270,3 @@ Cor:    Azul
 Tropas: 18
 
 ... (exibe os demais territórios)
-```
-
-Este código atende a todos os requisitos:
-
-· Usa struct para agrupar dados
-· Permite cadastro de 5 territórios
-· Interface clara e intuitiva
-· Tempo de resposta inferior a 2 segundos
-· Código bem comentado e documentado
-· Nomenclatura clara e representativa
-· Validação de entrada
-· Formatação de saída organizada
